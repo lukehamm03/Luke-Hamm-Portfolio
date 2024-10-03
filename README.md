@@ -5,6 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Luke Hamm - Portfolio</title>
     <link rel="stylesheet" href="assets/css/custom.css"> <!-- Link to your custom CSS file -->
+    <style>
+        /* Styling for the resume link */
+        a.resume-link {
+            text-decoration: none;
+            color: #333;  /* Original color */
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        a.resume-link:hover {
+            color: #007BFF;  /* Change to blue on hover */
+            transition: color 0.3s ease;
+        }
+
+        /* Basic styling for the project card */
+        .project-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            background-color: #f4f4f4;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* On hover, the background color changes, and the project card "moves" slightly */
+        .project-card:hover {
+            background-color: #333;  /* Darker background */
+            transform: translateY(-10px); /* Slight upward movement */
+            cursor: pointer;
+        }
+
+        /* Styling for the project content inside the card */
+        .project-card a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Change text color when hovering over project cards */
+        .project-card:hover .project-content h3, 
+        .project-card:hover .project-content p {
+            color: #fff; /* White text on hover */
+        }
+
+        /* Additional hover effect on the project link */
+        .project-card a:hover {
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
     <h1>Luke Hamm - Portfolio</h1>
@@ -17,7 +65,8 @@
     
     <section id="resume">
         <h2>Resume</h2>
-        <a href="Luke_Hamm_Resume.pdf" target="_blank">Download My Resume</a>
+        <!-- Resume link -->
+        <a href="Luke_Hamm_Resume.pdf" target="_blank" class="resume-link">Resume</a>
     </section>
     
     <section id="projects">
@@ -27,7 +76,7 @@
             <a href="MLB_Salaries_Project.pdf" target="_blank">
                 <div class="project-content">
                     <h3>MLB Salaries Project</h3>
-                    <p>Conducted an in-depth analysis of the relationship between MLB player salaries and on-field         performance using statistical methods like regression analysis. Processed and visualized extensive player data to identify key trends and highlight discrepancies between compensation and performance, contributing to discussions on team financial efficiency.</p>
+                    <p>Conducted an in-depth analysis of the relationship between MLB player salaries and on-field performance using statistical methods like regression analysis. Processed and visualized extensive player data to identify key trends and highlight discrepancies between compensation and performance, contributing to discussions on team financial efficiency.</p>
                 </div>
             </a>
         </div>
@@ -41,18 +90,21 @@
             </a>
         </div>
 
-
     </section>
     
     <section id="about">
         <h2>About Me</h2>
         <p>A brief description of your background, education, and any key achievements or experiences you'd like to highlight.</p>
     </section>
+
+    <!-- Contact section -->
+    <footer>
+        <h2>Contact</h2>
+        <ul>
+            <li><a href="https://www.linkedin.com/in/luke-hamm-93ab3527b" target="_blank">LinkedIn</a></li>
+            <li><a href="https://github.com/lukehamm03" target="_blank">GitHub</a></li>
+            <li><a href="mailto:lukehamm03@gmail.com">Email Me</a></li>
+        </ul>
+    </footer>
 </body>
 </html>
-
-## Contact
-- [LinkedIn](www.linkedin.com/in/luke-hamm-93ab3527b)
-- [GitHub]([https://github.com/yourprofile](https://github.com/lukehamm03))
-- [Email Me](lukehamm03@gmail.com)
-
