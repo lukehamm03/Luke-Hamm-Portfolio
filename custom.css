@@ -1,0 +1,33 @@
+/* Basic styling for the project card */
+.project-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  background-color: #f4f4f4;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+/* On hover, the background color changes, and the project card "moves" slightly */
+.project-card:hover {
+  background-color: #333;  /* Darker background */
+  transform: translateY(-10px); /* Slight upward movement */
+  cursor: pointer;
+}
+
+/* Styling for the project content inside the card */
+.project-card a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Change text color when hovering */
+.project-card:hover .project-content h3, 
+.project-card:hover .project-content p {
+  color: #fff; /* White text on hover */
+}
+
+/* Additional hover effect on the project link */
+.project-card a:hover {
+  text-decoration: none;
+}
