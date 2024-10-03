@@ -93,8 +93,8 @@
     </section>
     
     <section id="about">
-        <h2>About Me</h2>
-        <p>A brief description of your background, education, and any key achievements or experiences you'd like to highlight.</p>
+        <h2>Skills</h2>
+        <p>A R, Python, Excel.</p>
     </section>
 
     <!-- Contact section -->
