@@ -26,8 +26,8 @@
         <div class="project-card">
             <a href="MLB_Salaries_Project.pdf" target="_blank">
                 <div class="project-content">
-                    <h3>Project 1: Data Analysis of X</h3>
-                    <p>A brief description of the project.</p>
+                    <h3>MLB Salaries Project</h3>
+                    <p>Conducted an in-depth analysis of the relationship between MLB player salaries and on-field         performance using statistical methods like regression analysis. Processed and visualized extensive player data to identify key trends and highlight discrepancies between compensation and performance, contributing to discussions on team financial efficiency.</p>
                 </div>
             </a>
         </div>
@@ -35,21 +35,13 @@
         <div class="project-card">
             <a href="Hackathon.pdf" target="_blank">
                 <div class="project-content">
-                    <h3>Project 2: Machine Learning Model for Y</h3>
-                    <p>A brief description of the project.</p>
+                    <h3>Reds Hackathon</h3>
+                    <p>Collaborative advanced data analysis working with large data sets of MLB statistics. Used predictive modeling to estimate which pitchers would be better suited in a new role.</p>
                 </div>
             </a>
         </div>
 
-        <div class="project-card">
-            <a href="projects/project3.pdf" target="_blank">
-                <div class="project-content">
-                    <h3>Project 3: Web Application for Z</h3>
-                    <p>A brief description of the project.</p>
-                </div>
-            </a>
-        </div>
-        
+
     </section>
     
     <section id="about">
