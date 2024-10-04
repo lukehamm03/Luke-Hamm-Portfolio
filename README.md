@@ -90,6 +90,15 @@
             </a>
         </div>
 
+        <div class="project-card">
+            <a href="Unit_1_Project.pdf" target="_blank">
+                <div class="project-content">
+                    <h3>Fantasy Football Player Value</h3>
+                    <p>Developed an analytical tool using historical NFL data to assess fantasy football player performance, tracking week-by-week trends to determine how long a player must consistently over- or under-perform to justify reassessing their value. The analysis leverages statistical methods to offer insights for decision-making in player trades, adds, or drops.</p>
+                </div>
+            </a>
+        </div>
+
     </section>
     
     <section id="about">
