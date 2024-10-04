@@ -103,7 +103,7 @@
     
     <section id="about">
         <h2>Skills</h2>
-        <p>A R, Python, Excel.</p>
+        <p>R, Python, Excel.</p>
     </section>
 
     <!-- Contact section -->
