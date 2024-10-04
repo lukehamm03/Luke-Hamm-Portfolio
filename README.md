@@ -53,7 +53,7 @@
     </style>
 </head>
 <body>
-    <h1>Luke Hamm - Portfolio</h1>
+    
     
     <nav>
         <a href="#resume">Resume</a> | 
