@@ -4,18 +4,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <link rel="stylesheet" href="assets/css/custom.css"> <!-- Link to your custom CSS file -->
     <style>
-        /* Styling for the resume link */
-        a.resume-link {
-            text-decoration: none;
-            color: #333;  /* Original color */
-            font-weight: bold;
-            font-size: 18px;
-        }
+    /* Centering the resume box on the page */
+    .resume-box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px; /* Adjust height as necessary */
+        width: 300px;  /* Adjust width as necessary */
+        margin: 50px auto;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        background-color: #f4f4f4;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        text-align: center;
+        cursor: pointer;
+    }
 
-        a.resume-link:hover {
-            color: #007BFF;  /* Change to blue on hover */
-            transition: color 0.3s ease;
-        }
+    /* Resume box hover effect (turns blue) */
+    .resume-box:hover {
+        background-color: #007BFF;  /* Blue background on hover */
+        color: #fff;  /* White text on hover */
+    }
+
+    /* Styling for the text inside the box */
+    .resume-box a {
+        text-decoration: none;
+        color: inherit;  /* Inherit color, including the hover color */
+        font-size: 20px;
+        font-weight: bold;
+    }
+</style>
 
         /* Basic styling for the project card */
         .project-card {
@@ -52,20 +70,12 @@
         }
     </style>
 </head>
-<body>
-    
-    
-    <nav>
-        <a href="#resume">Resume</a> | 
-        <a href="#projects">Projects</a> | 
-        <a href="#about">About Me</a>
-    </nav>
-    
+<body>   
     <section id="resume">
-        <h2>Resume</h2>
-        <!-- Resume link -->
-        <a href="Luke_Hamm_Resume.pdf" target="_blank" class="resume-link">Resume</a>
-    </section>
+    <div class="resume-box">
+        <a href="Luke_Hamm_Resume.pdf" target="_blank">View My Resume</a>
+    </div>
+</section>
     
     <section id="projects">
         <h2>Projects</h2>
