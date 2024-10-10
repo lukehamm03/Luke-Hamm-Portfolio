@@ -66,9 +66,11 @@
 
 <!-- Resume Section -->
 <section id="resume">
-    <div class="resume-box">
-        <a href="Luke_Hamm_Resume.pdf" target="_blank">View My Resume</a>
-    </div>
+    <a href="Luke_Hamm_Resume.pdf" target="_blank">
+        <div class="resume-box">
+            View My Resume
+        </div>
+    </a>
 </section>
 
 <!-- Projects Section -->
