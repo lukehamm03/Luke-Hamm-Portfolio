@@ -94,6 +94,38 @@
         margin-left: 20px;
         margin-right: 20px;
     }
+
+    /* Center the skills section heading */
+    #about h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* Styling for the skills boxes */
+    .skills-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px; /* Space between the skill boxes */
+    }
+
+    .skill-box {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 20px;
+        background-color: #f4f4f4;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        width: 100px; /* Adjust width to keep the boxes consistent */
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Hover effect for the skill boxes */
+    .skill-box:hover {
+        background-color: #007BFF;
+        color: white;
+        transform: scale(1.05); /* Slight scale-up on hover */
+    }
 </style>
 
 <!-- Resume Section -->
@@ -152,7 +184,11 @@
 <!-- About Section -->
 <section id="about">
     <h2>Skills</h2>
-    <p>R, Python, Excel.</p>
+    <div class="skills-container">
+        <div class="skill-box">R</div>
+        <div class="skill-box">Python</div>
+        <div class="skill-box">Excel</div>
+    </div>
 </section>
 
 <!-- Contact Section -->
