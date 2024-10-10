@@ -37,6 +37,7 @@
         margin: 15px 0;
         background-color: #f4f4f4;
         transition: transform 0.3s ease, background-color 0.3s ease;
+        position: relative; /* To position the logos inside the card */
     }
 
     /* On hover, the background color changes, and the project card "moves" slightly */
@@ -62,6 +63,28 @@
     .project-card a:hover {
         text-decoration: none;
     }
+
+    /* Download icon positioning and styling */
+    .download-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    /* Scale effect on hover for download icons */
+    .download-icon:hover {
+        transform: scale(1.1);
+    }
+
+    /* Adjust the size of the logos if necessary */
+    .download-icon img {
+        width: 100%;
+        height: auto;
+    }
 </style>
 
 <!-- Resume Section -->
@@ -84,6 +107,10 @@
                 <p>Conducted an in-depth analysis of the relationship between MLB player salaries and on-field performance using statistical methods like regression analysis. Processed and visualized extensive player data to identify key trends and highlight discrepancies between compensation and performance, contributing to discussions on team financial efficiency.</p>
             </div>
         </a>
+        <!-- R logo for downloading the R code -->
+        <a href="https://github.com/lukehamm03/Luke-Hamm-Portfolio/blob/main/MLBSlaraiesCode.Rmd" download class="download-icon">
+            <img src="R-logo.jpg" alt="Download R Code">
+        </a>
     </div>
 
     <div class="project-card">
@@ -93,6 +120,10 @@
                 <p>Collaborative advanced data analysis working with large data sets of MLB statistics. Used predictive modeling to estimate which pitchers would be better suited in a new role.</p>
             </div>
         </a>
+        <!-- R logo for downloading the R code -->
+        <a href="https://github.com/lukehamm03/Luke-Hamm-Portfolio/blob/main/RedsHackathon%20(1).Rmd" download class="download-icon">
+            <img src="R-logo.jpg" alt="Download R Code">
+        </a>
     </div>
 
     <div class="project-card">
@@ -101,6 +132,10 @@
                 <h3>Fantasy Football Player Value</h3>
                 <p>Developed an analytical tool using historical NFL data to assess fantasy football player performance, tracking week-by-week trends to determine how long a player must consistently over- or under-perform to justify reassessing their value. The analysis leverages statistical methods to offer insights for decision-making in player trades, adds, or drops.</p>
             </div>
+        </a>
+        <!-- Python logo for downloading the Python code -->
+        <a href="https://github.com/lukehamm03/Luke-Hamm-Portfolio/blob/main/fantasyplayervaluecode.ipynb" download class="download-icon">
+            <img src="Python-logo.jpg" alt="Download Python Code">
         </a>
     </div>
 </section>
