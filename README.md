@@ -1,12 +1,20 @@
 <style>
-    /* Centering the resume box on the page */
+    /* Centering the resume and LinkedIn container */
+    .resume-linkedin-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px; /* Space between the Resume and LinkedIn */
+        margin: 20px auto;
+    }
+
+    /* Styling for the resume box */
     .resume-box {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100px; /* Adjust height for smaller size */
         width: 150px;  /* Adjust width for smaller size */
-        margin: 20px auto; /* Reduce margin for less vertical space */
         border: 2px solid #ddd;
         border-radius: 8px;
         background-color: #f4f4f4;
@@ -15,13 +23,13 @@
         cursor: pointer;
     }
 
-    /* Resume box hover effect (turns blue) */
+    /* Resume box hover effect */
     .resume-box:hover {
         background-color: #007BFF;  /* Blue background on hover */
         color: #fff;  /* White text on hover */
     }
 
-    /* Styling for the text inside the box */
+    /* Styling for the text inside the resume box */
     .resume-box a {
         text-decoration: none;
         color: inherit;  /* Inherit color, including the hover color */
@@ -29,112 +37,34 @@
         font-weight: bold; /* Bold text */
     }
 
-    /* Basic styling for the project card */
-    .project-card {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 15px 0;
-        background-color: #f4f4f4;
-        transition: transform 0.3s ease, background-color 0.3s ease;
-        position: relative; /* To position the logos inside the card */
-        max-width: 900px; /* Set a max-width to reduce white space */
-        margin-left: auto;
-        margin-right: auto; /* Center content and reduce white space */
-    }
-
-    /* On hover, the background color changes, and the project card "moves" slightly */
-    .project-card:hover {
-        background-color: #333;  /* Darker background */
-        transform: translateY(-10px); /* Slight upward movement */
-        cursor: pointer;
-    }
-
-    /* Styling for the project content inside the card */
-    .project-card a {
-        text-decoration: none;
-        color: inherit;
-    }
-
-    /* Change text color when hovering over project cards */
-    .project-card:hover .project-content h3, 
-    .project-card:hover .project-content p {
-        color: #fff; /* White text on hover */
-    }
-
-    /* Additional hover effect on the project link */
-    .project-card a:hover {
-        text-decoration: none;
-    }
-
-    /* Download icon positioning and styling */
-    .download-icon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 30px;
-        height: 30px;
+    /* Styling for the LinkedIn logo */
+    .linkedin-logo {
+        width: 50px; /* Adjust the size of the LinkedIn logo */
         cursor: pointer;
         transition: transform 0.3s ease;
     }
 
-    /* Scale effect on hover for download icons */
-    .download-icon:hover {
-        transform: scale(1.1);
-    }
-
-    /* Adjust the size of the logos if necessary */
-    .download-icon img {
-        width: 100%;
-        height: auto;
-    }
-
-    /* Reduce the overall padding/margin to reduce white space on sides */
-    body {
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-
-    /* Center the skills section heading */
-    #about h2 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    /* Styling for the skills boxes */
-    .skills-container {
-        display: flex;
-        justify-content: center;
-        gap: 20px; /* Space between the skill boxes */
-    }
-
-    .skill-box {
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        padding: 10px 20px;
-        background-color: #f4f4f4;
-        font-size: 18px;
-        font-weight: bold;
-        text-align: center;
-        width: 100px; /* Adjust width to keep the boxes consistent */
-        transition: background-color 0.3s ease, transform 0.3s ease;
-    }
-
-    /* Hover effect for the skill boxes */
-    .skill-box:hover {
-        background-color: #007BFF;
-        color: white;
-        transform: scale(1.05); /* Slight scale-up on hover */
+    /* Hover effect for LinkedIn logo */
+    .linkedin-logo:hover {
+        transform: scale(1.1); /* Slightly enlarge on hover */
     }
 </style>
 
-<!-- Resume Section -->
-<section id="resume">
-    <a href="Luke_Hamm_Resume.pdf" target="_blank">
-        <div class="resume-box">
-            Resume
-        </div>
-    </a>
+<!-- Resume and LinkedIn Section -->
+<section id="resume-linkedin">
+    <div class="resume-linkedin-container">
+        <!-- Resume box -->
+        <a href="Luke_Hamm_Resume.pdf" target="_blank">
+            <div class="resume-box">
+                Resume
+            </div>
+        </a>
+        
+        <!-- LinkedIn logo -->
+        <a href="https://www.linkedin.com/in/luke-hamm-93ab3527b" target="_blank">
+            <img src="LinkedIn-logo.png" alt="LinkedIn" class="linkedin-logo">
+        </a>
+    </div>
 </section>
 
 <!-- Projects Section -->
@@ -190,13 +120,3 @@
         <div class="skill-box">Excel</div>
     </div>
 </section>
-
-<!-- Contact Section -->
-<footer>
-    <h2>Contact</h2>
-    <ul>
-        <li><a href="https://www.linkedin.com/in/luke-hamm-93ab3527b" target="_blank">LinkedIn</a></li>
-        <li><a href="https://github.com/lukehamm03" target="_blank">GitHub</a></li>
-        <li><a href="mailto:lukehamm03@gmail.com">Email Me</a></li>
-    </ul>
-</footer>
