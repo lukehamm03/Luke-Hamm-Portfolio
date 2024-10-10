@@ -1,0 +1,356 @@
+---
+title: "Moneyball Revisited: Analyzing the Relationship Between Performance and Pay in MLB"
+author: "Jaxon Bennett and Luke Hamm"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: pdflatex
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+#This is a setup chunk, you will never need to modify it
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(openintro)
+library(rvest)
+library(GGally)
+library(lattice)
+library(knitr)
+library(dplyr)
+library(Lahman)
+library(ggplot2)
+library(readxl)
+```
+
+```{r,echo=FALSE}
+mlbSalaries <- read_excel("mlbSalaries.xlsx")
+data(Salaries)
+data(Batting)
+data(AllstarFull)
+data(AwardsSharePlayers)
+data(People)
+data(AwardsPlayers)
+#data(mlbSalaries)
+```
+
+```{r,echo=FALSE, warning=FALSE}
+#data set with player batting data from lahman
+batting1 <- filter(Batting, yearID > 2012)
+
+#data set with personal data for players from lahman
+people2023 <- filter(People, birthYear > 1983)
+
+#creating a new column so we are able to combine the two datasets, dataset from CotsBaseballContracts
+people2023$Player <- paste(people2023$nameLast, people2023$nameFirst, sep = ", ")
+
+#mergeing the two datasets 
+d1 <- merge(people2023, mlbSalaries, by = "Player")
+
+
+#removing columns that are not useful 
+d2 <- d1 %>%
+  select(-c("birthMonth", "birthDay", "birthCountry", "birthState", "deathYear", "deathMonth", "deathDay", "deathCountry", "deathState", "deathCity", "deathDate", "birthCity", "nameFirst", "nameLast", "finalGame", "bbrefID", "retroID", "birthDate")) 
+
+
+#becasue there are 2 will Smith's in the mlb right now
+d3 <- d2 %>% 
+  filter(Player != "Smith, Will")
+
+#adding the batting data to the dataset 
+d4 <- merge(batting1, d3, by = "playerID")
+
+#setting the year for the stats to look at 
+d5 <- d4 %>%
+  filter(yearID == 2022)
+
+#filtering out any remaining pitchers 
+d6 <- d5 %>% 
+  filter(AB != 0)
+
+#renaming the columns with each players AAV
+d7 <- d6 %>%
+  rename(salary = "2023")
+
+#removing players with less than 50 AB's on the year 
+d8 <- d7 %>%
+  filter(AB > 49)
+
+#filtering out players without a salary in the dataset(rookies, minor league deals, etc.)
+d9 <- d8 %>%
+  filter(!is.na(salary))
+
+
+#adding other important batting stats 
+d9$BA <- d9$H/d9$AB
+d9$OBP <- (d9$H+d9$HBP+d9$BB)/(d9$AB+d9$HBP+d9$BB+d9$SF)
+d9$X1B <- d9$H - (d9$X2B +d9$X3B +d9$HR)
+d9$SLG <- (d9$X1B + 2*d9$X2B + 3*d9$X3B + 4*d9$HR)/d9$AB
+d9$OPS <- d9$OBP + d9$SLG
+d9$age <- 2023 - d9$birthYear
+d9$HR_per_AB <- (d9$HR)/(d9$AB)
+d9$BB_per_SO <- (d9$BB)/(d9$SO)
+d9$salary_m <- (d9$salary)/1000000
+d9$salary_ln <- log(d9$salary)
+#filtering out players on league minimum 
+d10 <- d9 %>%
+  filter(salary > 1500000)
+```
+### Abstract 
+Each year, Major League Baseball (MLB) witnesses a flurry of free agent activity, with players commanding vastly different salaries based on their perceived value to teams. Our study revisits the principles of "Moneyball" by exploring the intricate relationship between player performance metrics, personal attributes, and compensation in MLB. We aim to identify the key statistical indicators that significantly influence player salaries, focusing particularly on the 2022 season and subsequent 2023 free agency deals.
+
+### Introduction
+
+Every year there are hundreds of free agents in Major League Baseball (MLB). Some make hundreds of millions of dollars in free agency, while others make just a small fraction of that. Our project aims to explore the correlation between MLB players' salaries, performance metrics, and other relevant information. The objective is to identify the key statistics that significantly influence a player's earning potential, especially as they approach their contract year. Given that front offices tend to keep their player analysis internal and inaccessible to the public, we intend to employ linear regressions and other analytical tools to uncover the metrics that carry the most weight in the evaluation of potential free agents by these front offices. Additionally, we intend to employ statistical tests to compare the salaries of right-handed hitters with those of left-handed hitters. Given the common belief that left-handed hitters hold greater value than their right-handed ones, we aim to use the findings from our linear regression to investigate whether two players with identical statistics and metrics, but differing dominant hands, would command equal compensation upon entering free agency, or if left-handed hitters would indeed earn more.
+
+Our analysis focuses on players' statistics from the 2022 season and their salaries for the subsequent year, 2023. This timeframe is significant because players typically negotiate contracts during the offseason following the 2022 season, and the terms of these contracts are often influenced by their performance in the preceding season. In this analysis, we utilize two primary datasets. First the Lahman Baseball Dataset, compiled by Sean Lahman, which provides comprehensive historical data on Major League Baseball (MLB) players, teams, and seasons, and is included in R. The second dataset is The Cot's Baseball Contracts dataset (https://legacy.baseballprospectus.com/compensation/cots/), which offers detailed information on player contracts, salaries, and transactions in MLB.   
+
+There are a number of different statistics that we will refer to in throughout this paper, the following table can be refered to for clarity:  
+
+\begin{table}[h]
+  \centering
+  \caption{Hitting statistics and player information}
+  \label{tab:hitting-stats}
+  \begin{tabular}{|c|c|}
+    \hline
+    Name of Stat & Description  \\
+    \hline
+    Salary & Players Salary for the 2023 season \\
+    Age  & Players age when they signed their contract (2022) \\
+    OPS & Players On Base plus Slugging Percentage \\
+    HR per AB  & Players home runs divided by their at bats \\
+    RBI  & Number of runs the player drove in \\
+    BB per SO & Players walks divided by their strikeouts \\
+    SB & Stolen Bases \\
+    MLS & Major League Service time (Number of years in the MLB) \\
+    BatsL & Player bats Left Handed \\
+    BatsR & Player bats Right Handed \\
+    \hline
+  \end{tabular}
+\end{table}
+
+
+\newpage 
+  
+  
+### Exploratory Data Analysis 
+
+Our analysis began by merging two datasets: the Lahman Baseball dataset and Cot's Baseball Salaries dataset. This merger provided us with a comprehensive dataset containing information on every player who signed a free agent deal during the 2022-2023 offseason. To focus solely on hitters for this analysis, we excluded all pitchers from the dataset. Additionally, we filtered out players with fewer than 50 at-bats during the season, as this criterion often indicates injury while still resulting in substantial contracts the following year. As a result, our final dataset comprises 211 players, each with statistics from the 2022 season and corresponding salaries for the 2023 season. Below shows the distribution of the player salaries for the 2023 season from our dataset. 
+
+\textbf{Figure 1}
+
+```{r, echo=FALSE,message=FALSE}
+ggplot(data = d10, aes(x = salary_m)) +
+  geom_histogram(binwidth = .3, fill = "skyblue", color = "black", alpha = 0.7) +  
+  labs(x = "Salary(millions)", y = "Frequency", title = "Distribution of Player Salaries") +
+  theme_minimal()
+
+```
+
+We can see that Figure 1 shows the distribution of the salaries of mlb hitters from the 2023 season, and that it follows a skewed right distribution. The right skew can be explained by the high percentage of players making league minimum.  Below we can notice the correlation between some of the more common hitting statistics and how they correlate to player salary before we run the regression. 
+
+\textbf{Figure 2}
+```{r,echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(gridExtra)
+
+# Create the plots
+plot1 <- ggplot(data = d10, aes(x = OPS, y = salary)) +
+  geom_point() +
+  labs(x = "OPS", y = "Salary", title = "OPS vs. Salary")
+
+plot2 <- ggplot(data = d10, aes(x = age, y = salary)) +
+  geom_point() +
+  labs(x = "Age", y = "Salary", title = "Age vs. Salary")
+
+plot3 <- ggplot(data = d10, aes(x = HR, y = salary)) +
+  geom_point() +
+  labs(x = "HR", y = "Salary", title = "Home Runs vs. Salary")
+
+plot4 <- ggplot(data = d10, aes(x = BA, y = salary)) +
+  geom_point() +
+  labs(x = "BA", y = "Salary", title = "Batting Average vs. Salary")
+
+# Combine plots into a single picture
+combined_plot <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 2)
+
+# Show the combined plot
+print(combined_plot)
+
+```
+We can see from the above plots that there is varying correlation between the different variables and player salaries. We can begin to see how certain variables have greater correlation to player salary than others. As our dataset has many more variables than are plotted above, we created a regression to find which stats have the highest correlation to player salary. 
+
+\textbf{Figure 3}
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+library(gridExtra)
+left_salaries <- d10 %>%
+  filter(bats == "L")
+left_salaries$salary_per_OPS <- (left_salaries$OPS)/(left_salaries$salary_m)
+right_salaries <- d10 %>%
+  filter(bats == "R")
+right_salaries$salary_per_OPS <- (right_salaries$OPS)/(right_salaries$salary_m)
+
+# Plot for left-handed batters
+plot_left <- ggplot(data = left_salaries, aes(x = salary_m)) +
+  geom_histogram(binwidth = 3, aes(y = ..density..), fill = "skyblue", color = "black", alpha = 0.7) +  
+  labs(x = "Salary (Millions)", y = "Relative Frequency", title = "Left-Handed Batters") +
+  theme_minimal()
+
+# Plot for right-handed batters
+plot_right <- ggplot(data = right_salaries, aes(x = salary_m)) +
+  geom_histogram(binwidth = 3, aes(y = ..density..), fill = "skyblue", color = "black", alpha = 0.7) +  
+  labs(x = "Salary (Millions)", y = "Relative Frequency", title = "Right-Handed Batters") +
+  theme_minimal()
+
+# Arrange plots side by side
+grid.arrange(plot_left, plot_right, ncol = 2)
+
+aov(salary_m ~ bats, data=d10)
+summary(aov(salary_m ~ bats, data=d10))
+
+```
+As the second part of this report is exploring if left handed batters are more valuable than right handed batters, we first created of the distributions of the side by side of player salaries for left and right handed hitters seen above in Figure 3. We used relative frequency as a way to compare to show they they have similar distributions, because there are a greater number of right handed hitters in the MLB than left handed hitters. We also preformed a ANOVA test to confirm what we saw visually. The high P-value indicates that at the 5% significance level, we fail to reject the null hypothesis that the mean salary in millions of left handed batters is equal to that of right handed batters.  Subsequently, in our Statistical Analysis section, we preform a hypothesis test to discern whether left-handed hitters indeed see higher salaries compared to their right-handed counterparts.
+
+### Statistical Analysis
+\textbf{Linear Model}
+```{r,echo=FALSE}
+lm1 <- lm(salary_ln ~ age + OPS + HR_per_AB + RBI + BB_per_SO + MLS + bats, data = d9)
+summary(lm1)
+```
+```{r, message=FALSE, echo=FALSE}
+# Create a data frame with the given table
+data <- data.frame(
+  Variable = c("Age", "OPS", "HR_per_AB", "RBI", "BB_per_SO", "MLS", "BatsL", "BatsR"),
+  Multiplier = c(0.9593666, 0.7864328, 26.48329, 1.014799, 2.07422, 1.310811, 1.168007, 1.19886),
+  Percent_Change = c("-4.1%", "-21.4%", "2,548.3%", "1.5%", "107.4%", "31.1%", "16.8%", "19.9%")
+)
+
+# Print the data frame
+print(data)
+
+```
+The linear model above is the reduced linear regression we created with the natural log of salary as the predictor variable. Based on the data, the variables with the highest correlation to salary are: Age, RBI, BB_per_SO, and MLS, as seen above in the regression. To determine this, we looked at the statistical significance of each of the beta coefficients by examining the individual standard errors and doubling them. If they were larger than the coefficient, then we knew it was not statistically significant. We then cross-checked these findings with the individual P-values and confirmed that the four variables were statistically significant. Since we used a log-linear regression model, our interpretation of the beta coefficients looked a little different than normal. Using age as an example variable, we can tell that roughly for every year increase in a player's age, the predicted salary will decrease by about 4.1%. This is true for all the variables; however, we also found the actual estimates by using the percent change formula and found the percentage changes of all the estimates, which are included in the table below. The two variables with the most impact were MLS at a 31.1% change and BB_per_SO at 107.4%. Both of these make sense; for Major League service time (MLS), as a player spends more time in the MLB and demonstrates value, they will naturally be worth more money. For walks per strikeout (BB_per_SO), this stat has a high predictive percentage because the state will be a low number less than one, so a player will most likely never have one unit of change in this variable in a given year. This means the real percentage change in one year will be much lower than 107.4%. Home runs per at-bat (HR_per_AB) was another variable like BB_per_SO that had a massive percentage effect on salary per one unit of change, but this would never be realized because of the tiny number it would be in one year. This variable was statistically insignificant, so we did not include it as one of our noted predictors of salary.
+\textbf{Figure 4}
+```{r, echo=FALSE,message=FALSE, warning=FALSE}
+library(ggpubr)
+# Fit the linear regression model
+lm1 <- lm(salary_ln ~ age + OPS + HR_per_AB + RBI + BB_per_SO + MLS + bats, data = d9)
+
+# Create a data frame for plotting residuals
+residuals_df <- data.frame(
+  Fitted = fitted(lm1),
+  Residuals = residuals(lm1)
+)
+
+# Plot residuals versus fitted values using ggplot2
+residual_plot <- ggplot(residuals_df, aes(x = Fitted, y = Residuals)) +
+  geom_point(color = "blue", alpha = 0.7) +  
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+  labs(x = "Fitted Values", y = "Residuals", title = "Residuals Plot") + 
+  theme_minimal() 
+
+# Plot of histogram of residuals to check nearly normal residuals
+plot_normality <- ggplot(data = residuals_df) +
+  geom_histogram(aes(x = Residuals, y = ..density..), bins = 8) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(residuals_df$Residuals),
+                            sd = sd(residuals_df$Residuals)),
+                col = "blue",
+                size = 1.5) +  
+  labs(x = "Residuals", y = "Density") +
+  ggtitle("Histogram of Residuals")
+
+#print(residual_plot)
+#print(plot_normality)
+
+# Combine the plots
+combined_plots <- ggpubr::ggarrange(residual_plot, plot_normality, ncol = 1)
+
+# Print the combined plots
+print(combined_plots)
+
+```
+
+There are a few assumption we need to make. We first have to assume linearity in the regression. In the Figure 4 above, there does seem to be a clear linear pattern in the residuals. We think this pattern exists due to the league minimum salary of $700,000. We thought it might be colinearity as well and tried dropping various variables from the regression however, this failed to correct the problem. We next have to assume nearly normal residuals. In Figure 4, the plot of the residuals roughly follows a normal distribution, so we can confirm this assumption. The final assumption is that the variability is constant. In Figure 4 we can see that excluding the league minimum line, the data is spread fairly evenly in the plot of the residuals.  
+
+\textbf{Figure 5}
+```{r,echo=FALSE,message=FALSE,error=FALSE, warning=FALSE}
+library(gridExtra)
+
+plot_left <- ggplot(data = d10, aes(x = age, y = salary_m)) +
+  geom_point() +
+  labs(x = "Age", y = "Salary(Millions)", title = "Age vs. Salary")
+
+plot_right <- ggplot(data = d10, aes(x = BB_per_SO, y = salary_m)) +
+  geom_point() +
+  labs(x = "BB_per_SO", y = "Salary(Millions)", title = "BB_per_SO vs. Salary")
+
+plot_right_lower <- ggplot(data = d10, aes(x = RBI, y = salary_m)) +
+  geom_point() +
+  labs(x = "RBI", y = "Salary(Millions)", title = "RBI vs. Salary")
+
+plot_left_lower <- ggplot(data = d10, aes(x = MLS, y = salary_m)) +
+  geom_point() +
+  labs(x = "MLS", y = "Salary(Millions)", title = "MLS vs. Salary")
+
+# Arrange plots in a 2 by 2 grid
+grid.arrange(plot_left, plot_right, plot_right_lower, plot_left_lower, ncol = 2)
+
+```
+The scatterplot on the bottom left in Figure 5 illustrates the correlation between OPS and Salary, revealing a notable relationship between a player's offensive performance and their subsequent salary. Furthermore, the data reflects an intuitive trend: as a player's RBI count increases, their salary for the following season tends to increase as well. The same trend can be seen in the top right for BB_per_So compared to Salary. Similarly, the scatterplot depicting age versus salary in the top left aligns with expectations, as it showcases a common career trajectory in Major League Baseball. Typically, players secure their initial substantial contracts around the age of 30, following the expiration of their rookie deals, a pattern also portrayed by this plot.
+
+\textbf{Hypothesis Test for left vs right handed hitters}
+Now that we have found that BB_per_SO is the most significant statistical predictor for player salaries, we now want to test to see if we should expect to see a difference in salary for two players with identical stats, one being left handed, the other being right handed. Our Hypothesis are as follow: 
+Null hypothesis (\(H_0\)): There is no difference in the average salary based on BB_per_SO for left-handed and right-handed hitters.
+Alternative hypothesis (\(H_a\)): The average salary based on BB_per_SO, is higher for left-handed vs. right-handed hitters.
+
+In order to test this, we used a Welch's Two Sample t-test with a 95% confidence interval. 
+
+```{r,echo=FALSE, message=FALSE}
+library(patchwork)
+left_salaries <- d10 %>%
+  filter(bats == "L")
+left_salaries$salary_per_BB_per_SO <- (left_salaries$BB_per_SO)/(left_salaries$salary_m)
+right_salaries <- d10 %>%
+  filter(bats == "R")
+right_salaries$salary_per_BB_per_SO <- (right_salaries$BB_per_SO)/(right_salaries$salary_m)
+
+t.test(x = left_salaries$salary_per_BB_per_SO, y = right_salaries$salary_per_BB_per_SO, conf.level = 0.95, mu = 0, alternative = "greater")
+``` 
+
+
+\textbf{Figure 7}
+
+```{r, message=FALSE, echo=FALSE}
+# Create a combined dataframe for both left and right-handed salaries
+combined_salaries <- rbind(mutate(left_salaries, hand = "Left-Handed"),
+                           mutate(right_salaries, hand = "Right-Handed"))
+
+# Create a boxplot with dodged positions
+combined_boxplot <- ggplot(data = combined_salaries, aes(x = hand, y = salary_per_BB_per_SO, fill = hand)) +
+  geom_boxplot(position = position_dodge(width = 0.8), color = "black") +
+  labs(x = NULL, y = "Salary over BB_per_SO", title = "Salary over BB_per_SO by Handedness") +
+  scale_fill_manual(values = c("skyblue", "salmon")) +
+  theme(legend.position = "none")
+
+# Print the combined plot
+print(combined_boxplot)
+
+
+```
+
+Based on the output of our t-test, the p-value is very large at .276 which is significantly larger than our significance level at .05. Based on this, we fail to reject the null hypothesis. The data suggests that there is not a difference in the average salary based on BB_per_SO between left-handed and right-handed hitters. In Figure 7, we can see in the side-by-side boxplots above that the mean salary over BB_per_SO is nearly identical for both, confirming our hypothesis test.
+
+
+### Conclusion
+
+Based on our analysis, we have gained valuable insights into the factors influencing Major League Baseball (MLB) player salaries. Our findings shed light on the complex interplay between player performance metrics, personal attributes, and compensation. 
+
+Firstly, through our linear regression analysis, we identified MLS, BB_per_SO, Age, and RBI as the most significant predictors of player salaries. This suggests that both experience and offensive contribution play crucial roles in determining player compensation.     Interestingly, while age exhibited a negative correlation with salary, indicating that younger players tend to command higher salaries, RBI and BB_per_SO showed a positive correlation, implying that players who drive in more runs, strike out less, and hit more home runs are rewarded with higher salaries in the subsequent season.
+
+Furthermore, our hypothesis test comparing the salaries of left-handed and right-handed hitters yielded intriguing results. Despite the common perception that left-handed hitters are more valuable, our analysis found no significant difference in average salaries based on BB_per_SO between the two groups. This challenges conventional wisdom and suggests that, from a financial standpoint, both left-handed and right-handed hitters are equally valued in the MLB.
+
+However, we do acknowledge several weaknesses in this test. Firstly, there is a limitation in the available data. While the Lahman Baseball Dataset offers valuable hitting statistics for our analysis, MLB front offices have access to a much broader array of data. Their datasets encompass a multitude of statistics beyond what we can access, which may explain why our R-squared values are lower than optimal. Additionally, our analysis is confined to players' data from the 2022 season for predicting their 2023 free agency deals. In reality, front offices consider a player's entire career, though they undoubtedly place significant emphasis on the most recent season, such as 2022.  Future research could benefit from considering players' entire careers and exploring more granular data to gain a deeper understanding of the factors influencing MLB player salaries.
+
+In conclusion, our project contributes to the ongoing conversation surrounding MLB player compensation by providing valuable insights into the relationship between player performance metrics and salaries. By uncovering the key factors driving player compensation, our analysis offers valuable implications for players, agents, team managers, and MLB stakeholders navigating the complex landscape of professional baseball.
+
