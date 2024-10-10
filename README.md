@@ -4,9 +4,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 200px; /* Adjust height as necessary */
-        width: 300px;  /* Adjust width as necessary */
-        margin: 50px auto;
+        height: 100px; /* Adjust height for smaller size */
+        width: 150px;  /* Adjust width for smaller size */
+        margin: 20px auto; /* Reduce margin for less vertical space */
         border: 2px solid #ddd;
         border-radius: 8px;
         background-color: #f4f4f4;
@@ -25,8 +25,8 @@
     .resume-box a {
         text-decoration: none;
         color: inherit;  /* Inherit color, including the hover color */
-        font-size: 20px;
-        font-weight: bold;
+        font-size: 24px;  /* Larger font size */
+        font-weight: bold; /* Bold text */
     }
 
     /* Basic styling for the project card */
@@ -38,6 +38,9 @@
         background-color: #f4f4f4;
         transition: transform 0.3s ease, background-color 0.3s ease;
         position: relative; /* To position the logos inside the card */
+        max-width: 900px; /* Set a max-width to reduce white space */
+        margin-left: auto;
+        margin-right: auto; /* Center content and reduce white space */
     }
 
     /* On hover, the background color changes, and the project card "moves" slightly */
@@ -85,13 +88,19 @@
         width: 100%;
         height: auto;
     }
+
+    /* Reduce the overall padding/margin to reduce white space on sides */
+    body {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
 </style>
 
 <!-- Resume Section -->
 <section id="resume">
     <a href="Luke_Hamm_Resume.pdf" target="_blank">
         <div class="resume-box">
-            View My Resume
+            Resume
         </div>
     </a>
 </section>
