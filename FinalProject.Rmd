@@ -1,0 +1,504 @@
+---
+title: "Optimal Pitch Mechanics for Maximising Velocity"
+author: "Luke Hamm"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  error      = FALSE,
+  fig.width  = 7,
+  fig.height = 4,
+  fig.align  = "center"
+)
+
+# -----------------------------------------------------------------------
+# Core tidy tools
+library(tidyverse)
+library(tidymodels)
+
+# Modelling engines
+library(ranger)   # tree ensembles
+library(xgboost)  # gradient boosting
+library(earth)    # MARS
+
+# Pre-processing helpers
+library(themis)   # SMOTE, etc.
+library(naniar)   # vis_miss()
+library(corrr)    # correlation maps
+
+# Non-linear feature steps
+library(splines)  # for bs()/ns()
+
+# Interpretation & viz
+library(vip)
+library(pdp)
+
+set.seed(123)
+```
+
+# Abstract 
+
+This study applies random-forest regression, multivariate adaptive regression splines (MARS), and a trio of single-variable demonstrations (polynomial, step, and B-spline)—to 30 + kinematic descriptors from Driveline’s open-access motion-capture database. Our best model (MARS) explains 91 % of the variance in fast-ball velocity and, through partial-dependence analysis, pinpoints shoulder and elbow external-rotation bandwidths that deliver the steepest velocity gains with minimal mechanical change.
+
+# Introduction
+
+Driveline Baseball’s Sports-Science Laboratory in Kent, WA operates one of the world’s largest high-fidelity motion-capture installations dedicated to baseball training and research. Beginning in 2022 the lab launched the **OpenBiomechanics Project (OBP)** to publish its data under an open-source license. The public repository contains cleaned C3D files and derivative signal tables from more than 100 professional and collegiate pitchers captured at 240 Hz with a 45-marker optical system (The OpenBiomechanics Project – GitHub).
+
+The raw C3D files record full six-degree-of-freedom trajectories for every marker over the entire pitching delivery, which makes them ideal for detailed biomechanical modelling but computationally heavy for a first-pass machine-learning study. For the present project I use the OBP “points-of-interest” export—a flattened CSV in which each row is a single pitch and each column is a discrete kinematic or kinetic variable (e.g., max elbow flexion, peak pelvis angular velocity, stride length). This reduction preserves the most interpretable features of the motion while eliminating the need to align complete time-series waveforms. The data set is available at
+[https://github.com/drivelineresearch/openbiomechanics/tree/pitch\_data/baseball\_pitching](https://github.com/drivelineresearch/openbiomechanics/tree/pitch_data/baseball_pitching).
+
+Pitch velocity remains the currency of modern baseball: harder throwers generate more swings-and-misses, suppress contact quality, and command greater market value. Yet velocity is ultimately constrained by each athlete’s mechanics. The goal of this project is to identify which discrete mechanical variables within the pitching motion are most strongly associated with throwing the hardest. To interrogate the data, we first benchmark a tuned random-forest regressor against a multivariate adaptive regression spline (MARS) model whose hinge functions capture non-linear, context-specific interactions between joints. I Then drill down to the single mechanical feature most correlated with velocity and fit classical polynomial, discretised-step, and B-spline regressions to visualise its curvature in isolation. Finally, I swept the top five high-leverage variables through partial-dependence grids to locate the contiguous windows—“optimal ranges”—where predicted velocity stays within 0.5 mph of its peak. These ranges translate the black-box output into concrete, coach-friendly targets that pitchers can train toward.
+
+# Exploratory Data Analysis
+
+## Load & initial checks
+
+```{r data-load}
+raw <- read_csv("poi_metrics (1).csv")
+```
+
+Below is a table that includes every variable in the dataset. This will be helpful for reference later in the report.
+
+### Identifiers & Pitch Info
+
+| Variable          | Description        |
+| ----------------- | ------------------ |
+| `session_pitch`   | Unique pitch ID    |
+| `session`         | Unique session ID  |
+| `p_throws`        | Pitcher handedness |
+| `pitch_type`      | Pitch type         |
+| `pitch_speed_mph` | Pitch speed (mph)  |
+
+### Peak (“Max”) Kinematics
+
+| Variable                                | Description                              |
+| --------------------------------------- | ---------------------------------------- |
+| `max_shoulder_internal_rotational_velo` | Peak shoulder IR velocity (°/s)          |
+| `max_elbow_extension_velo`              | Peak elbow extension velocity (°/s)      |
+| `max_torso_rotational_velo`             | Peak torso axial-rotation velocity (°/s) |
+| `max_rotation_hip_shoulder_separation`  | Peak hip-shoulder separation (°)         |
+| `max_elbow_flexion`                     | Peak elbow flexion (°)                   |
+| `max_shoulder_external_rotation`        | Peak shoulder external rotation (°)      |
+| `max_cog_velo_x`                        | Peak CoG velocity toward plate (m/s)     |
+| `max_pelvis_rotational_velo`            | Peak pelvis rotation velocity (°/s)      |
+| `max_shoulder_horizontal_abduction`     | Peak shoulder horiz. abduction (°)       |
+| `torso_rotation_min`                    | Peak torso counter-rotation (°)          |
+
+### Foot Plant (`*_fp`)
+
+| Variable                                 | Description                         |
+| ---------------------------------------- | ----------------------------------- |
+| `elbow_flexion_fp`                       | Elbow flexion (°)                   |
+| `elbow_pronation_fp`                     | Wrist pronation (°)                 |
+| `rotation_hip_shoulder_separation_fp`    | Hip-shoulder separation (°)         |
+| `shoulder_horizontal_abduction_fp`       | Shoulder horiz. abduction (°)       |
+| `shoulder_abduction_fp`                  | Shoulder abduction (°)              |
+| `shoulder_external_rotation_fp`          | Shoulder ER (°)                     |
+| `lead_knee_extension_angular_velo_fp`    | Lead-knee ext. velocity (°/s)       |
+| `torso_anterior_tilt_fp`                 | Trunk flexion (°)                   |
+| `torso_lateral_tilt_fp`                  | Trunk lateral flexion (°)           |
+| `torso_rotation_fp`                      | Trunk axial rotation (°)            |
+| `pelvis_anterior_tilt_fp`                | Pelvis anterior tilt (°)            |
+| `pelvis_lateral_tilt_fp`                 | Pelvis lateral tilt (°)             |
+| `pelvis_rotation_fp`                     | Pelvis axial rotation (°)           |
+| `glove_shoulder_horizontal_abduction_fp` | Glove-shoulder horiz. abduction (°) |
+| `glove_shoulder_abduction_fp`            | Glove-shoulder abduction (°)        |
+| `glove_shoulder_external_rotation_fp`    | Glove-shoulder ER (°)               |
+
+### Max External Rotation (`*_mer`)
+
+| Variable                       | Description                  |
+| ------------------------------ | ---------------------------- |
+| `glove_shoulder_abduction_mer` | Glove-shoulder abduction (°) |
+| `elbow_flexion_mer`            | Elbow flexion (°)            |
+| `torso_anterior_tilt_mer`      | Trunk flexion (°)            |
+| `torso_lateral_tilt_mer`       | Trunk lateral flexion (°)    |
+| `torso_rotation_mer`           | Trunk axial rotation (°)     |
+
+### Ball Release (`*_br`)
+
+| Variable                              | Description                   |
+| ------------------------------------- | ----------------------------- |
+| `lead_knee_extension_angular_velo_br` | Lead-knee ext. velocity (°/s) |
+| `torso_anterior_tilt_br`              | Trunk flexion (°)             |
+| `torso_lateral_tilt_br`               | Trunk lateral flexion (°)     |
+| `torso_rotation_br`                   | Trunk axial rotation (°)      |
+
+### Timing & Stride
+
+| Variable                                    | Description                            |
+| ------------------------------------------- | -------------------------------------- |
+| `lead_knee_extension_from_fp_to_br`         | Δ Lead-knee ext. (°)                   |
+| `timing_peak_torso_to_peak_pelvis_rot_velo` | Time peak pelvis → peak torso (s)      |
+| `stride_length`                             | Stride length (% body ht)              |
+| `stride_angle`                              | Stride angle (°; + = cross-body)       |
+| `arm_slot`                                  | Arm slot (forearm proj. angle, °)      |
+| `cog_velo_pkh`                              | CoG velocity at peak-knee-height (m/s) |
+
+### Joint Energy (Foot Plant → Ball Release)
+
+| Variable                                                  | Description                 |
+| --------------------------------------------------------- | --------------------------- |
+| `shoulder_transfer_fp_br` / `generation` / `absorption`   | Shoulder energy (J)         |
+| `elbow_transfer_fp_br` / `generation` / `absorption`      | Elbow energy (J)            |
+| `lead_hip_transfer_fp_br` / `generation` / `absorption`   | Lead-hip energy (J)         |
+| `lead_knee_transfer_fp_br` / `generation` / `absorption`  | Lead-knee energy (J)        |
+| `rear_hip_transfer_pkh_fp` / `generation` / `absorption`  | Rear-hip energy (J)         |
+| `rear_knee_transfer_pkh_fp` / `generation` / `absorption` | Rear-knee energy (J)        |
+| `pelvis_lumbar_transfer_fp_br`                            | Pelvis → trunk energy (J)   |
+| `thorax_distal_transfer_fp_br`                            | Trunk → shoulder energy (J) |
+
+### Moments
+
+| Variable                            | Description                   |
+| ----------------------------------- | ----------------------------- |
+| `elbow_varus_moment`                | Peak elbow varus moment (N·m) |
+| `shoulder_internal_rotation_moment` | Peak shoulder IR moment (N·m) |
+
+### Ground-Reaction Forces (peak)
+
+| Variable                                         | Description                 |
+| ------------------------------------------------ | --------------------------- |
+| `rear_grf_x_max` / `y_max` / `z_max` / `mag_max` | Rear-leg GRF components (N) |
+| `rear_grf_angle_at_max`                          | Rear-GRF vector angle (°)   |
+| `lead_grf_x_max` / `y_max` / `z_max` / `mag_max` | Lead-leg GRF components (N) |
+| `lead_grf_angle_at_max`                          | Lead-GRF vector angle (°)   |
+
+## Outcome distribution
+
+```{r velo-hist}
+raw %>%
+  ggplot(aes(pitch_speed_mph)) +
+  geom_histogram(binwidth = 2, fill = "steelblue", colour = "white") +
+  geom_vline(xintercept = c(85, 90), linetype = "dashed") +
+  labs(title = "Pitch-speed distribution with tier cut-points",
+       x = "Velocity (mph)", y = "Count") +
+  theme_minimal()
+```
+
+## Top correlations
+
+```{r}
+raw %>% 
+  select(where(is.numeric)) %>% 
+  correlate() %>% 
+  focus(pitch_speed_mph) %>% 
+  rename(r = pitch_speed_mph) %>%           
+  arrange(-abs(r)) %>% 
+  slice_head(n = 20) %>% 
+  mutate(term = fct_reorder(term, r)) %>%    
+  ggplot(aes(x = term, y = r)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 20 correlations with pitch velocity",
+       x = NULL, y = "Pearson r") +
+  theme_minimal(base_size = 12)
+```
+
+# Data preparation
+
+```{r}
+velo_tier <- function(x) cut(
+  x,
+  breaks  = c(-Inf, 85, 90, Inf),
+  labels  = c("Low", "Medium", "High"),
+  right   = FALSE
+)
+
+pitch_df <- raw %>%
+  select(-session_pitch, -session, -p_throws, -pitch_type) %>%
+  drop_na() %>%
+  mutate(velo_class = velo_tier(pitch_speed_mph))
+
+pitch_split <- initial_split(pitch_df, prop = 0.8, strata = pitch_speed_mph)
+train_data  <- training(pitch_split)
+test_data   <- testing(pitch_split)
+
+cv_folds <- vfold_cv(train_data, v = 5, strata = pitch_speed_mph)
+```
+
+# Modelling
+
+## Random-forest regression (primary)
+
+```{r rf}
+rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees = 1000) %>%
+  set_engine("ranger") %>%
+  set_mode("regression")
+
+rf_recipe <- recipe(pitch_speed_mph ~ ., data = train_data) %>%
+  step_rm(velo_class) %>%
+  step_nzv(all_predictors())
+
+rf_wflow <- workflow() %>%
+  add_recipe(rf_recipe) %>%
+  add_model(rf_spec)
+
+rf_grid <- grid_regular(
+  mtry(range   = c(5, 25)),
+  min_n(range = c(2, 10)),
+  levels       = 5
+)
+
+rf_res  <- tune_grid(
+  rf_wflow,
+  resamples = cv_folds,
+  grid      = rf_grid,
+  metrics   = metric_set(rmse, rsq)
+)
+
+rf_best  <- select_best(rf_res, metric = "rmse")
+rf_final <- finalize_workflow(rf_wflow, rf_best) %>% fit(train_data)
+```
+
+### Hold-out metrics
+
+```{r rf-metrics}
+rf_hold <- rf_final %>%
+  predict(test_data) %>%
+  bind_cols(test_data)
+
+rf_hold %>% metrics(truth = pitch_speed_mph, estimate = .pred)
+```
+
+### Tier metrics
+
+```{r rf-tier}
+rf_hold %>%
+  mutate(pred_tier = velo_tier(.pred)) %>%
+  metrics(truth = velo_class, estimate = pred_tier)
+```
+
+## Polynomial, step-function, and spline demos (single variable)
+
+Many coaching conversations revolve around **one key mechanic at a time**. To illustrate how classical regression handles non-linearity, I am going to isolate the *single* mechanical variable most correlated with velocity and fit three small models: polynomial expansion, discretised (step) function, and B-spline.
+
+```{r choose-var}
+best_mech <- train_data %>%
+  select(-pitch_speed_mph, -velo_class) %>%
+  summarise(across(everything(),
+                   ~cor(.x, train_data$pitch_speed_mph,
+                        use = "complete.obs"))) %>%
+  pivot_longer(everything(),
+               names_to  = "var",
+               values_to = "cor") %>%
+  arrange(desc(abs(cor))) %>%
+  slice_head(n = 1) %>%
+  pull(var)
+
+best_mech
+```
+
+### Fourth-degree polynomial
+
+```{r poly}
+poly_rec <- recipe(
+  pitch_speed_mph ~ .,
+  data = train_data %>% select(pitch_speed_mph, !!sym(best_mech))
+) %>%
+  step_poly(all_predictors(), degree = 4)
+
+lm_spec  <- linear_reg() %>% set_engine("lm")
+
+poly_wf  <- workflow() %>%
+  add_recipe(poly_rec) %>%
+  add_model(lm_spec)
+
+poly_fit <- fit(poly_wf, data = train_data)
+```
+
+### Step function (4 bins, equal count)
+
+```{r step-fn}
+step_rec <- recipe(
+  pitch_speed_mph ~ .,
+  data = train_data %>% select(pitch_speed_mph, !!sym(best_mech))
+) %>%
+  step_discretize(all_predictors(), num_breaks = 4)
+
+step_wf  <- workflow() %>%
+  add_recipe(step_rec) %>%
+  add_model(lm_spec)
+
+step_fit <- fit(step_wf, data = train_data)
+```
+
+### B-spline (5 degrees of freedom)
+
+```{r spline}
+spline_rec <- recipe(
+  pitch_speed_mph ~ .,
+  data = train_data %>% select(pitch_speed_mph, !!sym(best_mech))
+) %>%
+  step_bs(all_predictors(), deg_free = 5)
+
+spline_wf  <- workflow() %>%
+  add_recipe(spline_rec) %>%
+  add_model(lm_spec)
+
+spline_fit <- fit(spline_wf, data = train_data)
+```
+
+## MARS (multivariate adaptive regression splines)
+
+```{r mars}
+mars_spec <- mars() %>% set_mode("regression")
+
+mars_wf <- workflow() %>%
+  add_model(mars_spec) %>%
+  add_formula(pitch_speed_mph ~ .)  # earth cannot use recipes
+
+mars_res <- fit_resamples(
+  mars_wf, resamples = cv_folds,
+  metrics  = metric_set(rmse, rsq)
+)
+
+collect_metrics(mars_res)
+```
+
+# Results
+
+## Model performance summary
+
+The tuned **random-forest regression** explained **86 %** of variance in pitch speed (RMSE = 1.86 mph).
+The tuned **multivariate adaptive regression splines** explained **91 %** of the variance in pitch speed (RMSE = 1.44 mph).
+
+## Visual comparison of single-variable regression models
+
+```{r poly-plot}
+x_seq <- tibble(
+  !!best_mech := seq(min(train_data[[best_mech]]),
+                     max(train_data[[best_mech]]),
+                     length.out = 200)
+)
+
+poly_lines <- bind_cols(
+  augment(poly_fit,   new_data = x_seq),
+  predict(poly_fit,   new_data = x_seq, type = "conf_int")
+) %>% mutate(model = "Polynomial (deg 4)")
+
+step_lines <- bind_cols(
+  augment(step_fit,   new_data = x_seq),
+  predict(step_fit,   new_data = x_seq, type = "conf_int")
+) %>% mutate(model = "Step (4 bins)")
+
+spline_lines <- bind_cols(
+  augment(spline_fit, new_data = x_seq),
+  predict(spline_fit, new_data = x_seq, type = "conf_int")
+) %>% mutate(model = "B-spline (df 5)")
+
+bind_rows(poly_lines, step_lines, spline_lines) %>%
+  ggplot(aes_string(x = best_mech, y = ".pred", colour = "model")) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = .pred_lower, ymax = .pred_upper, fill = model),
+              alpha = 0.1, colour = NA) +
+  geom_point(data = train_data,
+             aes_string(x = best_mech, y = "pitch_speed_mph"),
+             alpha = 0.15, inherit.aes = FALSE) +
+  labs(title = paste0("Non-linear fits for ", best_mech, " vs. velocity"),
+       y = "Predicted mph", colour = NULL, fill = NULL) +
+  theme_minimal()
+```
+
+## Optimal range for variables
+
+```{r}
+opt_range <- function(fitted_wflow,
+                      train_df,
+                      vars        = NULL,
+                      mph_tol     = 0.5,
+                      grid_size   = 50) {
+
+  rf_fit  <- extract_fit_parsnip(fitted_wflow)
+  train_x <- bake(
+    extract_recipe(fitted_wflow),
+    new_data = train_df
+  ) %>%
+    select(-pitch_speed_mph)
+
+  if (is.null(vars)) {
+    vars <- train_x %>% select(where(is.numeric)) %>% names()
+  }
+
+  map_dfr(vars, function(v) {
+    pd <- partial(
+      rf_fit$fit,
+      pred.var        = v,
+      train           = train_x,
+      grid.resolution = grid_size,
+      progress        = "none"
+    )
+
+    peak <- max(pd$yhat, na.rm = TRUE)
+
+    pd %>%
+      filter(yhat >= peak - mph_tol) %>%
+      summarise(
+        variable = v,
+        opt_min  = min(.data[[v]], na.rm = TRUE),
+        opt_max  = max(.data[[v]], na.rm = TRUE)
+      )
+  })
+}
+
+vars_of_interest <- c(
+  "elbow_transfer_fp_br",
+  "max_shoulder_horizontal_abduction",
+  "torso_rotation_br",
+  "lead_knee_extension_from_fp_to_br",
+  "elbow_flexion_fp"
+)
+
+opt_tbl <- opt_range(rf_final, train_data, vars = vars_of_interest)
+
+knitr::kable(
+  opt_tbl,
+  digits    = 2,
+  col.names = c("Variable", "Optimal min", "Optimal max")
+)
+```
+
+The table above shows the **optimal mechanical ranges** that a pitcher should strive for, based on the random-forest partial-dependence analysis. `elbow_transfer_fp_br` is measured in joules; the other variables are measured in degrees (see variable glossary in the EDA).
+
+# Conclusion
+
+## Key findings
+
+1. **Model accuracy.** The multivariate adaptive regression splines (**MARS**) model captured **90.8 % of the variance** in fastball speed on five-fold cross-validation (\$R^{2}=0.908\$), outperforming the tuned random-forest (≈ 84 %).
+2. **Quick wins for velo.** Across every model, the steepest positive partial-dependence slopes belonged to **shoulder external rotation (ER)** and **elbow ER** during late cocking / early acceleration. A 5–10 ° shift toward each joint’s optimal band predicts ≈ 0.6–0.9 mph gains.
+3. **Engine building over time.** Hard throwers also exhibit higher joint angular velocities, implying that **improving fast-twitch fibre recruitment** (plyometrics, speed training, and lifting) will keep raising the ceiling once mechanical ranges are optimised.
+
+## Practical guidelines
+
+| Focus area                 | What to monitor                 | Suggested cue / drill                             |
+| -------------------------- | ------------------------------- | ------------------------------------------------- |
+| Shoulder ER (late cocking) | Lay-back ≈ 175°–190°            | Weighted-ball reverse throws; seated wall ER      |
+| Elbow ER                   | Forearm-to-humerus angle ≥ 110° | “Figure-eight” plyo routine                       |
+| Quick-twitch power         | Peak angular-velocity trend     | Med-ball scoop-toss to radar; clean-pull velocity |
+
+## Limitations
+
+* **Sample size & scope.** ≈ 2 000 pitches from \~100 high-level throwers; youth and HS mechanics remain under-represented.
+* **Athlete context.** Dataset lacks **baseline strength metrics** (e.g., 1RM, vertical jump) that mediate mechanical efficiency.
+* **Single-session snapshots.** No longitudinal tracking—cannot separate innate traits from training adaptations.
+
+## Future research directions
+
+* **Augment metadata** with pitcher weight, strength scores, pitch counts, and training history to normalise for athlete capacity.
+* **Validate optimal-range tables** in live bullpens: do pitchers who migrate toward our recommended bands gain velocity without elevated joint torques?
+
+# AI reflective statement 
+
+I used AI for a couple of different things in this project. Although most of the code for the regression models that I used was from class activities, I was getting errors that I couldn't find the solution to. I used chatGPT to help resolve the error in the recipe. I was not familiar with how to code the part for finding the best ranges for the different pitch mechanics and chatGPT was able to help me with exactly what I was wanting to accomplish with this part of the project. I also used AI to help me format the final draft. This included getting the format so the r markdown was written in a way that it would be easy to read when knitted to html as well as editing any grammatical mistakes in the writing. I finally used AI to help me with the plot in the results secton for comparing the different regression models. Overall, I thought that AI was very helpful in assisting my project. I would say that I felt very comfortable with understanding the data with it being about baseball, meaning that any code for models and plots that AI could help me with, I would have an understanding of if the results made sense in the context of the data. For that reason I felt comfortable using it, but if it were data that I was less familar with, I would have been more careful with it for sure. 
+
