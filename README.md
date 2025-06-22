@@ -164,6 +164,21 @@
     <h2>Projects</h2>
 
     <div class="project-card">
+    <!-- Opens the HTML report in a new tab -->
+    <a href="FinalProject1.html" target="_blank">
+        <div class="project-content">
+            <h3>Optimal Pitch Mechanics for Maximising Velocity</h3>
+            <p>Machine-learning study (MARS & random forests) on Driveline motion-capture data that explains&nbsp;≈ 90 % of fastball-speed variance and identifies high-leverage shoulder/elbow ranges.</p>
+        </div>
+    </a>
+
+    <!-- R logo that lets visitors download the source Rmd -->
+    <a href="FinalProject1.Rmd" download class="download-icon">
+        <img src="R-logo.jpg" alt="Download R Code">
+    </a>
+</div>
+
+    <div class="project-card">
         <a href="MLB_Salaries_Project.pdf" target="_blank">
             <div class="project-content">
                 <h3>MLB Salaries Project</h3>
