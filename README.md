@@ -178,6 +178,22 @@
     </a>
 </div>
 
+<!-- Swing-Angles Analysis -->
+<div class="project-card">
+    <!-- Opens the notebook on GitHub when clicked -->
+    <a href="SwingAnglesProject (2) (1).ipynb" target="_blank">
+        <div class="project-content">
+            <h3>Swing Angles vs. Exit Velocity</h3>
+            <p>Built a Python pipeline that ingests Driveline C<sup>3</sup>D motion-capture files, extracts the bat-barrel trajectory, computes each swing’s average attack angle, and visualizes representative “steep” and “shallow” swings alongside a Pearson correlation with exit velocity. The near-zero correlation (r ≈ 0.005) shows that, in this sample, attack angle alone does not predict exit velo—debunking the “swing up / swing down” coaching myth.</p>
+        </div>
+    </a>
+
+    <!-- Python logo for downloading / viewing code -->
+    <a href="SwingAnglesProject.ipynb" download class="download-icon">
+        <img src="Python-logo.jpg" alt="Download Python Code">
+    </a>
+</div>
+
     <div class="project-card">
         <a href="MLB_Salaries_Project.pdf" target="_blank">
             <div class="project-content">
