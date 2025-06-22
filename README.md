@@ -182,22 +182,19 @@
     </a>
 </div>
 
-<!-- Swing-Angles Analysis -->
 <div class="project-card">
-    <!-- Opens the notebook on GitHub when clicked -->
-    <a href="SwingAnglesProject (2) (1).ipynb" target="_blank">
-        <div class="project-content">
-            <h3>Swing Angles vs. Exit Velocity</h3>
-            <p>Built a Python pipeline that ingests Driveline C<sup>3</sup>D motion-capture files, extracts the bat-barrel trajectory, computes each swing’s average attack angle, and visualizes representative “steep” and “shallow” swings alongside a Pearson correlation with exit velocity. The near-zero correlation (r ≈ 0.005) shows that, in this sample, attack angle alone does not predict exit velo—debunking the “swing up / swing down” coaching myth.</p>
-        </div>
-    </a>
-
-    <!-- Python logo for downloading / viewing code -->
-    <a href="SwingAnglesProject.ipynb" download class="download-icon">
-        <img src="Python-logo.jpg" alt="Download Python Code">
-    </a>
-</div>
-
+        <a href="Unit_1_Project.pdf" target="_blank">
+            <div class="project-content">
+                <h3>Fantasy Football Player Value</h3>
+                <p>Developed an analytical tool using historical NFL data to assess fantasy football player performance, tracking week-by-week trends to determine how long a player must consistently over- or under-perform to justify reassessing their value. The analysis leverages statistical methods to offer insights for decision-making in player trades, adds, or drops.</p>
+            </div>
+        </a>
+        <!-- Python logo for downloading the Python code -->
+        <a href="https://github.com/lukehamm03/Luke-Hamm-Portfolio/blob/main/fantasyplayervaluecode.ipynb" download class="download-icon">
+            <img src="Python-logo.jpg" alt="Download Python Code">
+        </a>
+    </div>
+    
     <div class="project-card">
         <a href="MLB_Salaries_Project.pdf" target="_blank">
             <div class="project-content">
@@ -224,18 +221,21 @@
         </a>
     </div>
 
-    <div class="project-card">
-        <a href="Unit_1_Project.pdf" target="_blank">
-            <div class="project-content">
-                <h3>Fantasy Football Player Value</h3>
-                <p>Developed an analytical tool using historical NFL data to assess fantasy football player performance, tracking week-by-week trends to determine how long a player must consistently over- or under-perform to justify reassessing their value. The analysis leverages statistical methods to offer insights for decision-making in player trades, adds, or drops.</p>
-            </div>
-        </a>
-        <!-- Python logo for downloading the Python code -->
-        <a href="https://github.com/lukehamm03/Luke-Hamm-Portfolio/blob/main/fantasyplayervaluecode.ipynb" download class="download-icon">
-            <img src="Python-logo.jpg" alt="Download Python Code">
-        </a>
-    </div>
+    <!-- Swing-Angles Analysis -->
+<div class="project-card">
+    <!-- Opens the notebook on GitHub when clicked -->
+    <a href="SwingAnglesProject (2) (1).ipynb" target="_blank">
+        <div class="project-content">
+            <h3>Swing Angles vs. Exit Velocity</h3>
+            <p>Built a Python pipeline that ingests Driveline C<sup>3</sup>D motion-capture files, extracts the bat-barrel trajectory, computes each swing’s average attack angle, and visualizes representative “steep” and “shallow” swings alongside a Pearson correlation with exit velocity. The near-zero correlation (r ≈ 0.005) shows that, in this sample, attack angle alone does not predict exit velo—debunking the “swing up / swing down” coaching myth.</p>
+        </div>
+    </a>
+
+    <!-- Python logo for downloading / viewing code -->
+    <a href="SwingAnglesProject.ipynb" download class="download-icon">
+        <img src="Python-logo.jpg" alt="Download Python Code">
+    </a>
+</div>
 </section>
 
 <!-- About Section -->
@@ -245,7 +245,6 @@
     <!-- Programming languages -->
     <div class="skill-box">R</div>
     <div class="skill-box">Python</div>
-    <div class="skill-box">C++</div>
 
     <!-- Data / query / markup tools -->
     <div class="skill-box">SQL</div>
