@@ -117,10 +117,14 @@
 
     /* Styling for the skills boxes */
     .skills-container {
-        display: flex;
-        justify-content: center;
-        gap: 20px; /* Space between the skill boxes */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;      /* NEW – lets boxes break onto a second row */
+    gap: 20px;
+    max-width: 700px;     /* NEW – keeps the row from stretching too wide */
+    margin: 0 auto;       /* still centered */
     }
+
 
     .skill-box {
         border: 2px solid #ddd;
@@ -238,8 +242,20 @@
 <section id="about">
     <h2>Skills</h2>
     <div class="skills-container">
-        <div class="skill-box">R</div>
-        <div class="skill-box">Python</div>
-        <div class="skill-box">Excel</div>
-    </div>
+    <!-- Programming languages -->
+    <div class="skill-box">R</div>
+    <div class="skill-box">Python</div>
+    <div class="skill-box">C++</div>
+
+    <!-- Data / query / markup tools -->
+    <div class="skill-box">SQL</div>
+    <div class="skill-box">Tableau</div>
+    <div class="skill-box">LaTeX</div>
+
+    <!-- BI & Office suite -->
+    <div class="skill-box">Excel</div>
+    <div class="skill-box">Access</div>
+    <div class="skill-box">Power&nbsp;BI</div>
+</div>
+
 </section>
