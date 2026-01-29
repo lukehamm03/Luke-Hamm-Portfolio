@@ -150,7 +150,7 @@
 <section id="resume-linkedin">
     <div class="resume-linkedin-container">
         <!-- Resume box -->
-        <a href="Luke_Hamm_Resume (7).pdf" target="_blank">
+        <a href="Luke_Hamm_Resume.pdf" target="_blank">
             <div class="resume-box">
                 Resume
             </div>
